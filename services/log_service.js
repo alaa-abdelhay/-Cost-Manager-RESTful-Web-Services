@@ -33,7 +33,7 @@ app.use('/api/logs', logRoutes);
  * Defines the port and starts listening for incoming connections.
  */
 
-const PORT = process.env.PORT_LOGS || 1234;
+const PORT = process.env.PORT_LOGS || 4001;
 app.listen(PORT, () => {
     logger.info(`Log Service is running on port ${PORT}`);
 });
