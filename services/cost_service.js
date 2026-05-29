@@ -14,10 +14,11 @@ mongoose.connect(process.env.MONGODB_URI)
     .then(() => logger.info('Cost Service connected to MongoDB'))
     .catch(err => logger.error('MongoDB connection error:', err));
 
-/**
+/*
  * Logging Middleware
  * Persists request metadata into the logs collection.
  */
+
 app.use(async (req, res, next) => {
     try {
         const logEntry = new Log({
