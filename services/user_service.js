@@ -41,6 +41,7 @@ app.use('/api', userRoutes);
 
 
 const PORT = process.env.PORT || process.env.PORT_USERS || 4002;
+
 app.listen(PORT, () => {
     logger.info(`User Service is running on port ${PORT}`);
 });
