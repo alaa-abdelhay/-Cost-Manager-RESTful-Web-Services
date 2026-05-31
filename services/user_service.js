@@ -7,15 +7,10 @@ const express = require('express');
 const mongoose = require('mongoose');
 const logger = require('../utils/logger');
 const userRoutes = require('../routes/users_routes');
-const Log = require('../models/log');
 
 const app = express();
 
 app.use(express.json());
-
-mongoose.connect(process.env.MONGODB_URI)
-    .then(() => logger.info('User Service connected to MongoDB Atlas'))
-    .catch((err) => logger.error('MongoDB connection error:', err));
 
 app.get('/', (req, res) => {
     res.status(200).json({
@@ -31,27 +26,25 @@ app.get('/health', (req, res) => {
     });
 });
 
-app.use((req, res, next) => {
-    if (mongoose.connection.readyState === 1) {
-        const logEntry = new Log({
-            level: 'info',
-            message: `User Service Request: ${req.method} ${req.originalUrl}`,
-            method: req.method,
-            url: req.originalUrl
-        });
-
-        logEntry.save().catch((error) => {
-            logger.error('User Service Log persistence failed', error);
-        });
-    }
-
-    next();
-});
-
 app.use('/api', userRoutes);
 
 const PORT = process.env.PORT || process.env.PORT_USERS || 4002;
 
-app.listen(PORT, () => {
-    logger.info(`User Service is running on port ${PORT}`);
-});
+async function startServer() {
+    try {
+        if (!process.env.MONGODB_URI) {
+            logger.error('MONGODB_URI is missing');
+        } else {
+            await mongoose.connect(process.env.MONGODB_URI);
+            logger.info('User Service connected to MongoDB Atlas');
+        }
+    } catch (error) {
+        logger.error('MongoDB connection error:', error);
+    }
+
+    app.listen(PORT, () => {
+        logger.info(`User Service is running on port ${PORT}`);
+    });
+}
+
+startServer();
