@@ -36,7 +36,8 @@ app.use(async (req, res, next) => {
 
 app.use('/api', costRoutes);
 
-const PORT = process.env.PORT_COSTS || 4003;
+
+const PORT = process.env.PORT || process.env.PORT_COSTS || 4003;
 app.listen(PORT, () => {
     logger.info(`Cost Service is running on port ${PORT}`);
 });
