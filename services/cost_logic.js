@@ -9,11 +9,26 @@ const User = require('../models/user');
  */
 async function assertUserExists(userid) {
     const user = await User.findOne({ id: userid });
+
     if (!user) {
         const error = new Error('User not found');
         error.status = 404;
         throw error;
     }
+}
+
+/**
+ * Converts grouped costs object into the exact report structure
+ * required by the project instructions.
+ */
+function buildCostsArray(groupedCosts) {
+    return [
+        { food: groupedCosts.food || [] },
+        { education: groupedCosts.education || [] },
+        { health: groupedCosts.health || [] },
+        { housing: groupedCosts.housing || [] },
+        { sports: groupedCosts.sports || [] }
+    ];
 }
 
 /**
@@ -34,46 +49,89 @@ async function addCostItem(payload) {
 }
 
 /**
- * Logic for monthly reports with caching (Computed Pattern).
+ * Logic for monthly reports with caching.
+ *
+ * This function implements the Computed Design Pattern:
+ * when a report belongs to a month that already passed,
+ * the computed report is saved in MongoDB and reused later.
  */
 async function getMonthlyReport(userid, year, month) {
     const reportsCollection = mongoose.connection.collection('monthly_reports');
 
-    // Try to find a pre-computed report
-    const cached = await reportsCollection.findOne({ userid: Number(userid), year: Number(year), month: Number(month) });
-    if (cached) return cached;
+    const numericUserId = Number(userid);
+    const numericYear = Number(year);
+    const numericMonth = Number(month);
 
-    // Otherwise, compute the report
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 0, 23, 59, 59);
+    // Try to find a pre-computed report.
+    const cached = await reportsCollection.findOne({
+        userid: numericUserId,
+        year: numericYear,
+        month: numericMonth
+    });
+
+    if (cached) {
+        return {
+            userid: cached.userid,
+            year: cached.year,
+            month: cached.month,
+            costs: Array.isArray(cached.costs)
+                ? cached.costs
+                : buildCostsArray(cached.costs || {})
+        };
+    }
+
+    // Otherwise, compute the report from the costs collection.
+    const startDate = new Date(numericYear, numericMonth - 1, 1);
+    const endDate = new Date(numericYear, numericMonth, 0, 23, 59, 59);
 
     const costs = await Cost.find({
-        userid: Number(userid),
-        date: { $gte: startDate, $lte: endDate }
+        userid: numericUserId,
+        date: {
+            $gte: startDate,
+            $lte: endDate
+        }
     });
 
     const groupedCosts = {};
-    Cost.CATEGORY_VALUES.forEach(cat => groupedCosts[cat] = []);
 
-    costs.forEach(cost => {
+    Cost.CATEGORY_VALUES.forEach((category) => {
+        groupedCosts[category] = [];
+    });
+
+    costs.forEach((cost) => {
         if (groupedCosts[cost.category]) {
             groupedCosts[cost.category].push({
-                day: cost.date.getDate(),
+                sum: cost.sum,
                 description: cost.description,
-                sum: cost.sum
+                day: cost.date.getDate()
             });
         }
     });
 
-    const report = { userid: Number(userid), year: Number(year), month: Number(month), costs: groupedCosts };
+    const report = {
+        userid: numericUserId,
+        year: numericYear,
+        month: numericMonth,
+        costs: buildCostsArray(groupedCosts)
+    };
 
-    // Cache the report if the month has already passed
+    // Cache the report only if the month has already passed.
     const now = new Date();
-    if (year < now.getFullYear() || (year == now.getFullYear() && month < now.getMonth() + 1)) {
-        await reportsCollection.insertOne({ ...report, created_at: new Date() });
+
+    if (
+        numericYear < now.getFullYear()
+        || (numericYear === now.getFullYear() && numericMonth < now.getMonth() + 1)
+    ) {
+        await reportsCollection.insertOne({
+            ...report,
+            created_at: new Date()
+        });
     }
 
     return report;
 }
 
-module.exports = { addCostItem, getMonthlyReport };
+module.exports = {
+    addCostItem,
+    getMonthlyReport
+};
