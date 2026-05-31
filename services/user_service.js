@@ -38,6 +38,25 @@ app.use(async (req, res, next) => {
 
 // Use routes with the /api prefix
 app.use('/api', userRoutes);
+app.get('/', (req, res) => {
+    res.status(200).json({
+        service: 'users',
+        status: 'running'
+    });
+});
+
+app.get('/api/users-test', (req, res) => {
+    res.status(200).json({
+        message: 'users service test route works'
+    });
+});
+app.use((req, res) => {
+    res.status(404).json({
+        id: 'not_found',
+        message: `Route not found: ${req.method} ${req.originalUrl}`,
+        service: 'users'
+    });
+});
 
 
 const PORT = process.env.PORT || process.env.PORT_USERS || 4002;
