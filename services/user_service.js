@@ -45,17 +45,25 @@ app.get('/', (req, res) => {
     });
 });
 
-app.get('/api/users-test', (req, res) => {
-    res.status(200).json({
-        message: 'users service test route works'
+/*
+ * Global Logging Middleware
+ * Persists every incoming request into the MongoDB logs collection.
+ * The request is not blocked while the log is being saved.
+ */
+
+app.use((req, res, next) => {
+    const logEntry = new Log({
+        level: 'info',
+        message: `User Service Request: ${req.method} ${req.originalUrl}`,
+        method: req.method,
+        url: req.originalUrl
     });
-});
-app.use((req, res) => {
-    res.status(404).json({
-        id: 'not_found',
-        message: `Route not found: ${req.method} ${req.originalUrl}`,
-        service: 'users'
+
+    logEntry.save().catch((error) => {
+        logger.error('User Service Log persistence failed', error);
     });
+
+    next();
 });
 
 
