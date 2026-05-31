@@ -39,12 +39,33 @@ async function addCostItem(payload) {
 
     await assertUserExists(Number(userid));
 
+    const costDate = date ? new Date(date) : new Date();
+
+    if (Number.isNaN(costDate.getTime())) {
+        const error = new Error('Invalid date');
+        error.status = 400;
+        throw error;
+    }
+
+    // Prevent adding cost items with dates that belong to the past.
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const costDay = new Date(costDate);
+    costDay.setHours(0, 0, 0, 0);
+
+    if (costDay < today) {
+        const error = new Error('Cannot add cost items with past dates');
+        error.status = 400;
+        throw error;
+    }
+
     return await Cost.create({
         description,
         category,
         userid: Number(userid),
         sum: Number(sum),
-        date: date ? new Date(date) : new Date()
+        date: costDate
     });
 }
 
