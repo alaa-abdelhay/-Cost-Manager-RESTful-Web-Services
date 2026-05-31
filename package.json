@@ -2,11 +2,11 @@
   "name": "bakcend-final-project",
   "version": "0.0.0",
   "private": true,
-  "scripts": {
-    "start": "node ./bin/www",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "concurrently \"node services/log_service.js\" \"node services/user_service.js\" \"node services/cost_service.js\" \"node services/about_service.js\""
-  },
+ "scripts": {
+  "start": "node services/user_service.js",
+  "test": "echo \"Error: no test specified\" && exit 1",
+  "dev": "concurrently \"node services/log_service.js\" \"node services/user_service.js\" \"node services/cost_service.js\" \"node services/about_service.js\""
+},
   "dependencies": {
     "cookie-parser": "~1.4.4",
     "debug": "~2.6.9",
