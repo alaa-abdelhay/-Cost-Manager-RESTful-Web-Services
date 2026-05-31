@@ -3,12 +3,19 @@ import sys
 
 filename = input("filename=")
 
-log_service_url = "http://localhost:4001"
-user_service_url = "http://localhost:4002"
-cost_service_url = "http://localhost:4003"
-about_service_url = "http://localhost:4004"
+# The first service handles logs.
+log_service_url = "https://cost-manager-logs-jbhq.onrender.com"
 
-output = open(filename, "w")
+# The second service handles user-related tasks.
+user_service_url = "https://cost-manager-users-jfqc.onrender.com"
+
+# The third service handles cost-related tasks.
+cost_service_url = "https://cost-manager-costs-52jt.onrender.com"
+
+# The fourth service handles about/team details.
+about_service_url = "https://cost-manager-about-ipb3.onrender.com"
+
+output = open(filename, "w", encoding="utf-8")
 sys.stdout = output
 
 print("Log Service URL: " + log_service_url)
@@ -60,8 +67,15 @@ print("----------------------------------")
 try:
     text = ""
     url = cost_service_url + "/api/add/"
-    data = requests.post(url,
-                         json={'userid': 123123, 'description': 'milk 9', 'category': 'food', 'sum': 8})
+    data = requests.post(
+        url,
+        json={
+            "userid": 123123,
+            "description": "milk 9",
+            "category": "food",
+            "sum": 8
+        }
+    )
 
     print("url=" + url)
     print("data.status_code=" + str(data.status_code))
@@ -88,3 +102,5 @@ try:
 except Exception as e:
     print("problem")
     print(e)
+
+output.close()
