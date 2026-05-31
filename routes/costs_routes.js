@@ -1,3 +1,5 @@
+'use strict';
+
 const express = require('express');
 const router = express.Router();
 const { addCostItem, getMonthlyReport } = require('../services/cost_logic');
@@ -12,7 +14,11 @@ router.post('/add', async (req, res) => {
         res.status(201).json(cost);
     } catch (error) {
         logger.error('Cost Addition Failed:', error);
-        res.status(error.status || 400).json({ id: Date.now(), message: error.message });
+
+        res.status(error.status || 400).json({
+            id: Date.now(),
+            message: error.message
+        });
     }
 });
 
@@ -22,15 +28,23 @@ router.post('/add', async (req, res) => {
 router.get('/report', async (req, res) => {
     try {
         const { id, year, month } = req.query;
+
         if (!id || !year || !month) {
-            return res.status(400).json({ message: 'Missing parameters: id, year, month' });
+            return res.status(400).json({
+                id: Date.now(),
+                message: 'Missing parameters: id, year, month'
+            });
         }
 
         const report = await getMonthlyReport(id, year, month);
         res.status(200).json(report);
     } catch (error) {
         logger.error('Report Generation Failed:', error);
-        res.status(error.status || 500).json({ message: error.message });
+
+        res.status(error.status || 500).json({
+            id: Date.now(),
+            message: error.message
+        });
     }
 });
 
